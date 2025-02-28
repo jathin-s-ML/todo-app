@@ -7,98 +7,107 @@ import (
 	"strings"
 )
 
-type Task struct{
-	Id int
-	Name string
+type Todo struct {
+	ID        int
+	Title     string
 	Completed bool
 }
 
-var tasks[] Task
-var nextid int =1
+var todos = make(map[int]Todo)
+var nextID = 1
 
-func addtask(name string){
-	
-	tasks=append(tasks, Task{Id: nextid,Name: name,Completed: false})
-	fmt.Println("task added :",name)
-	nextid++
-}
-
-func listoftasks()  {
-	if len(tasks)==0{
-		fmt.Println("there are no tasks to display")
+func AddTodo(title string) {
+	title = strings.TrimSpace(title)
+	if title == "" {
+		fmt.Println("Error: Task title cannot be empty!")
 		return
-	}else{
-		for _,i:=range tasks{
-			fmt.Printf("ID: %d | Task: %s | Status: %t\n", i.Id, strings.TrimSpace(i.Name), i.Completed)
+	}
+	todos[nextID] = Todo{ID: nextID, Title: title, Completed: false}
+	fmt.Printf("Task added: %s (ID: %d)\n", title, nextID)
+	nextID++
+}
+
+func ListTodos() {
+	if len(todos) == 0 {
+		fmt.Println("There are no tasks to display.")
+		return
+	}
+	fmt.Println("\n--- TODO LIST ---")
+	for _, todo := range todos {
+		status := "Pending"
+		if todo.Completed {
+			status = "Completed"
 		}
+		fmt.Printf("ID: %d | Task: %s | Status: %s\n", todo.ID, todo.Title, status)
 	}
 }
 
-func deletetask(taskid int){
-	for i:=range tasks{
-		if tasks[i].Id==taskid{
-			fmt.Println("removing task :",tasks[i].Name)
-			tasks=append(tasks[:i],tasks[i+1:]... )
-			fmt.Println("task removed successfully")
-			return
-		}
+func MarkAsCompleted(taskID int) {
+	if task, exists := todos[taskID]; exists {
+		task.Completed = true
+		todos[taskID] = task
+		fmt.Printf("Task (ID: %d) marked as completed.\n", taskID)
+	} else {
+		fmt.Println("Error: Task ID not found!")
 	}
-	fmt.Println("task not found")
-	
 }
 
-func markascompleted(taskid int){
-	for i :=range tasks{
-		if tasks[i].Id==taskid{
-			fmt.Println("updating the task as completed")
-			tasks[i].Completed=true
-			fmt.Println("task updated")
-			return
-		}
+func DeleteTodo(taskID int) {
+	if _, exists := todos[taskID]; exists {
+		delete(todos, taskID)
+		fmt.Printf("Task (ID: %d) deleted successfully.\n", taskID)
+	} else {
+		fmt.Println("Error: Task ID not found!")
 	}
-	fmt.Println("task not found")
 }
 
 func main() {
-	fmt.Println("welcome to TODO application")
-	var task string
-	var choice int
-	reader :=bufio.NewReader(os.Stdin)
+	fmt.Println("Welcome to the TODO Application!")
+	reader := bufio.NewReader(os.Stdin)
 
-	
-	for{
-		fmt.Println()
-		fmt.Println("choose an option \n1. add task\n2. list all tasks\n3. mark a task as completed\n4. delete a task\n5. exit todo application")
-		fmt.Println("enter the choice")
-		fmt.Scan(&choice)
-		switch choice{
-				case 1:{
-					fmt.Println("enter the task to add")
-					task,_=reader.ReadString('\n')
-					addtask(task)
-				}
-				case 2:{
-					listoftasks()
-				}	
-				case 3:{
-					fmt.Println("enter the id of the task to mark as completed")
-					var id int
-					fmt.Scan(&id)
-					markascompleted(id)
-				}
-				case 4:{
-					fmt.Println("enter the id of the task to delete ")
-					var id int
-					fmt.Scan(&id)
-					deletetask(id)
-				}
-				case 5:{
-					fmt.Println("exit the todo application")
-					os.Exit(0)
-				}
-				default  :{
-					fmt.Println("invalid choice")
-				}
+	for {
+		fmt.Println("\nChoose an option:")
+		fmt.Println("1. Add Task")
+		fmt.Println("2. List All Tasks")
+		fmt.Println("3. Mark a Task as Completed")
+		fmt.Println("4. Delete a Task")
+		fmt.Println("5. Exit")
+
+		fmt.Print("Enter your choice: ")
+		var choice int
+		_, err := fmt.Scan(&choice)
+		if err != nil {
+			fmt.Println("Invalid input! Please enter a number.")
+			continue
+		}
+
+		switch choice {
+		case 1:
+			fmt.Print("Enter the task title: ")
+			taskTitle, _ := reader.ReadString('\n')
+			AddTodo(taskTitle)
+
+		case 2:
+			ListTodos()
+
+		case 3:
+			fmt.Print("Enter the ID of the task to mark as completed: ")
+			var id int
+			fmt.Scan(&id)
+			MarkAsCompleted(id)
+
+		case 4:
+			fmt.Print("Enter the ID of the task to delete: ")
+			var id int
+			fmt.Scan(&id)
+			DeleteTodo(id)
+
+		case 5:
+			fmt.Println("Exiting the TODO application.")
+			os.Exit(0)
+
+		default:
+			fmt.Println("Invalid choice! Please select a valid option.")
 		}
 	}
 }
