@@ -1,8 +1,8 @@
-
 package todo
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"sync"
 )
@@ -62,12 +62,26 @@ func (tl *TodoList) MarkAsCompleted(id int) error {
 func (tl *TodoList) List() {
 	tl.Lock()
 	defer tl.Unlock()
+
 	if len(tl.todos) == 0 {
 		fmt.Println("No tasks to display")
 		return
 	}
-	fmt.Println("List of Tasks:")
+
+	// Collect tasks into a slice
+	var tasks []*Todo
 	for _, task := range tl.todos {
+		tasks = append(tasks, task)
+	}
+
+	// Sort tasks by ID
+	sort.Slice(tasks, func(i, j int) bool {
+		return tasks[i].ID < tasks[j].ID
+	})
+
+	// Print sorted tasks
+	fmt.Println("List of Tasks (Sorted by ID):")
+	for _, task := range tasks {
 		status := "Incomplete"
 		if task.Completed {
 			status = "Completed"
@@ -75,6 +89,7 @@ func (tl *TodoList) List() {
 		fmt.Printf("ID: %d | Task: %s | Status: %s\n", task.ID, task.TaskTitle, status)
 	}
 }
+
 
 func (tl *TodoList) FetchTasksConcurrently() {
 	var wg sync.WaitGroup
@@ -95,8 +110,20 @@ func (tl *TodoList) FetchTasksConcurrently() {
 		close(ch)
 	}()
 
-	fmt.Println("Fetching tasks concurrently:")
+	// Collect tasks from channel
+	var tasks []*Todo
 	for task := range ch {
+		tasks = append(tasks, task)
+	}
+
+	// Sort tasks by ID
+	sort.Slice(tasks, func(i, j int) bool {
+		return tasks[i].ID < tasks[j].ID
+	})
+
+	// Print sorted tasks
+	fmt.Println("Fetching tasks concurrently (Sorted by ID):")
+	for _, task := range tasks {
 		status := "Incomplete"
 		if task.Completed {
 			status = "Completed"
